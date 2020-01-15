@@ -2,36 +2,52 @@ var express = require('express');
     app = express();
     mongoose = require('mongoose');
 
-const PersonSchema = new mongoose.Schema({
-    name: String,
-   },{timestamps: true })
-   const Person = mongoose.model('Person', PersonSchema);
+const TaskSchema = new mongoose.Schema({
+    title: String,
+    description: String,
+    completed: {type: Boolean, default: false},
+    created_at: {type: Date, default: Date.now},
+    updated_at: {type: Date, default: Date.now}
+   })
+   const Task = mongoose.model('Task', TaskSchema);
 
-mongoose.connect('mongodb://localhost/people_db', { useNewUrlParser: true })
+mongoose.connect('mongodb://localhost/task_db', { useNewUrlParser: true })
 
 app.set('view engine', 'ejs');
 app.use(express.json());
 app.get('/',(req, res) =>{
-    Person.find()
-        .then(persons => res.json(persons))
+    Task.find()
+        .then(tasks => res.json(tasks))
         .catch(err => res.json(err));
 }),
-app.get('/remove/:name', (req, res) =>{
-    const person = Person.findOne({name: req.params.name})
-        person.remove({name: req.params.name})
-        .then(persons => res.json(persons))
+app.delete('/remove/:id', (req, res) =>{
+    const task = Task.findOne({_id: req.params.id})
+        task.remove({_id: req.params.id})
+        .then(tasks => res.json(tasks))
         .catch(err => res.json(err));
 }),
-app.get('/new/:name', (req,res) =>{
-    const person = new Person();
-    person.name = req.params.name;
-    person.save()
-        .then(persons => res.json(persons))
+app.post('/new', (req,res) =>{
+    const task = new Task();
+    task.title = req.body.title;
+    task.description = req.body.description;
+    task.save()
+        .then(tasks => res.json(tasks))
         .catch(err => res.json(err));
 })
-app.get('/:name', (req,res) =>{
-    Person.findOne({name: req.params.name})
-        .then(persons => res.json(persons))
+app.get('/:id', (req,res) =>{
+    Task.findOne({_id: req.params.id})
+        .then(tasks => res.json(tasks))
+        .catch(err => res.json(err));
+});
+app.put('/:id', (req,res) =>{
+    Task.findOne({_id: req.params.id})
+        .then(tasks =>{
+            tasks.title = req.body.title;
+            tasks.description = req.body.description;
+            tasks.completed = req.body.completed;
+            return tasks.save()
+        })
+        .then(tasks => res.json(tasks))
         .catch(err => res.json(err));
 });
 app.listen(8000, function () {
